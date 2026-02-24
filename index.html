@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuyDi Ecosystem & Core Loop Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  :root {
+    --primary: #126C62;
+    --primary-dark: #0E554D;
+    --primary-light: #1A8A7D;
+    --secondary: #C69B57;
+    --secondary-dark: #A8813E;
+    --secondary-light: #D4AF6E;
+    --accent-orange: #C69B57;
+    --accent-red: #C0392B;
+    --accent-purple: #6C5B7B;
+    --accent-pink: #B5547A;
+    --accent-amber: #D4A843;
+    --bg-dark: #F5F2ED;
+    --bg-card: rgba(18, 108, 98, 0.05);
+    --bg-card-hover: rgba(18, 108, 98, 0.1);
+    --text-primary: #1A2E2B;
+    --text-secondary: #4A6B66;
+    --text-muted: #7A9994;
+    --grid-color: rgba(18, 108, 98, 0.06);
+    --border-color: rgba(18, 108, 98, 0.12);
+    --transition-fast: 200ms;
+    --transition-normal: 350ms;
+    --transition-slow: 500ms;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'IBM Plex Sans Thai', 'Inter', sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    cursor: default;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== GRID BACKGROUND ===== */
+  .grid-bg {
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--grid-color) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .grid-bg::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(18,108,98,0.06) 0%, transparent 60%);
+  }
+
+  /* ===== SLIDE CONTAINER ===== */
+  .presentation {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    padding: clamp(24px, 3vw, 48px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(60px);
+    transition: opacity var(--transition-slow) ease, transform var(--transition-slow) cubic-bezier(0.34, 1.56, 0.64, 1), visibility 0s var(--transition-slow);
+  }
+  .slide.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+    transition-delay: 0s;
+  }
+  .slide.prev {
+    transform: translateX(-60px);
+  }
+
+  /* ===== SLIDE HEADER ===== */
+  .slide-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: clamp(16px, 2vw, 32px);
+    flex-shrink: 0;
+  }
+  .slide-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: clamp(10px, 1vw, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(18, 108, 98, 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(18, 108, 98, 0.2);
+  }
+  .slide-badge .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  .slide-number {
+    font-size: clamp(11px, 1vw, 14px);
+    font-weight: 500;
+    color: var(--text-muted);
+    font-family: 'Inter', monospace;
+  }
+
+  /* ===== SLIDE TITLE ===== */
+  .slide-title {
+    font-size: clamp(24px, 3.5vw, 56px);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: clamp(8px, 1vw, 16px);
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .slide-subtitle {
+    font-size: clamp(13px, 1.4vw, 20px);
+    color: var(--text-secondary);
+    font-weight: 400;
+    line-height: 1.5;
+    max-width: 700px;
+  }
+
+  /* ===== CONTENT AREA ===== */
+  .slide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* ===== FLOW DIAGRAM ===== */
+  .flow-container {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1.2vw, 18px);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: clamp(6px, 0.8vw, 12px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-step {
+    display: flex;
+    align-items: center;
+    gap: clamp(4px, 0.5vw, 8px);
+    padding: clamp(8px, 0.8vw, 14px) clamp(12px, 1.2vw, 20px);
+    border-radius: 10px;
+    font-size: clamp(10px, 1.1vw, 15px);
+    font-weight: 500;
+    transition: all var(--transition-fast) ease;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    backdrop-filter: blur(8px);
+  }
+  .flow-step:hover {
+    transform: translateY(-2px);
+    background: var(--bg-card-hover);
+  }
+  .flow-step .icon { font-size: clamp(14px, 1.4vw, 20px); }
+  .flow-arrow {
+    color: var(--text-muted);
+    font-size: clamp(14px, 1.5vw, 22px);
+    flex-shrink: 0;
+  }
+  .flow-step.highlight-blue {
+    background: rgba(18, 108, 98, 0.08);
+    border-color: rgba(18, 108, 98, 0.25);
+    color: var(--primary);
+  }
+  .flow-step.highlight-green {
+    background: rgba(18, 108, 98, 0.12);
+    border-color: rgba(18, 108, 98, 0.35);
+    color: #0E554D;
+  }
+  .flow-step.highlight-orange {
+    background: rgba(198, 155, 87, 0.1);
+    border-color: rgba(198, 155, 87, 0.3);
+    color: #A8813E;
+  }
+  .flow-step.highlight-red {
+    background: rgba(192, 57, 43, 0.08);
+    border-color: rgba(192, 57, 43, 0.25);
+    color: #C0392B;
+  }
+  .flow-step.highlight-purple {
+    background: rgba(108, 91, 123, 0.1);
+    border-color: rgba(108, 91, 123, 0.25);
+    color: #6C5B7B;
+  }
+  .flow-step.highlight-amber {
+    background: rgba(212, 168, 67, 0.1);
+    border-color: rgba(212, 168, 67, 0.25);
+    color: #9A7B2F;
+  }
+
+  /* ===== CARDS GRID ===== */
+  .cards-grid {
+    display: grid;
+    gap: clamp(10px, 1.2vw, 18px);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .cards-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cards-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+  .card {
+    padding: clamp(14px, 1.5vw, 24px);
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    backdrop-filter: blur(8px);
+    transition: all var(--transition-fast) ease;
+  }
+  .card:hover {
+    transform: translateY(-3px);
+    background: var(--bg-card-hover);
+    border-color: rgba(18, 108, 98, 0.25);
+  }
+  .card-icon {
+    font-size: clamp(24px, 2.5vw, 40px);
+    margin-bottom: clamp(6px, 0.8vw, 12px);
+  }
+  .card-title {
+    font-size: clamp(13px, 1.3vw, 18px);
+    font-weight: 700;
+    margin-bottom: clamp(4px, 0.5vw, 8px);
+    color: var(--text-primary);
+  }
+  .card-desc {
+    font-size: clamp(10px, 1vw, 14px);
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .card-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: clamp(9px, 0.8vw, 12px);
+    font-weight: 600;
+    margin-top: 8px;
+  }
+  .tag-blue { background: rgba(18,108,98,0.1); color: var(--primary); }
+  .tag-green { background: rgba(18,108,98,0.15); color: #0E554D; }
+  .tag-orange { background: rgba(198,155,87,0.15); color: #A8813E; }
+  .tag-red { background: rgba(192,57,43,0.12); color: #C0392B; }
+  .tag-purple { background: rgba(108,91,123,0.12); color: #6C5B7B; }
+
+  /* ===== STATE MACHINE ===== */
+  .state-machine {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.6vw, 10px);
+    flex-wrap: wrap;
+    margin: clamp(8px, 1vw, 16px) 0;
+  }
+  .state-node {
+    padding: clamp(8px, 0.8vw, 14px) clamp(14px, 1.4vw, 24px);
+    border-radius: 10px;
+    font-size: clamp(10px, 1vw, 14px);
+    font-weight: 600;
+    text-align: center;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    min-width: clamp(80px, 8vw, 130px);
+  }
+  .state-arrow {
+    color: var(--text-muted);
+    font-size: clamp(16px, 1.6vw, 24px);
+  }
+
+  /* ===== SECTION DIVIDER ===== */
+  .section-label {
+    font-size: clamp(10px, 0.9vw, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: clamp(8px, 1vw, 14px);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  /* ===== BULLET LIST ===== */
+  .bullet-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 0.7vw, 10px);
+  }
+  .bullet-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(8px, 0.8vw, 12px);
+    font-size: clamp(11px, 1.1vw, 15px);
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .bullet-list li .bullet {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  /* ===== TWO COLUMN ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(16px, 2vw, 32px);
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+  .col-section {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1vw, 14px);
+  }
+
+  /* ===== DECISION TREE ===== */
+  .decision-tree {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(6px, 0.8vw, 12px);
+  }
+  .decision-node {
+    padding: clamp(10px, 1vw, 16px) clamp(16px, 1.6vw, 28px);
+    border-radius: 12px;
+    font-size: clamp(11px, 1.1vw, 15px);
+    font-weight: 600;
+    text-align: center;
+    max-width: 500px;
+  }
+  .decision-diamond {
+    background: rgba(198, 155, 87, 0.1);
+    border: 1px solid rgba(198, 155, 87, 0.3);
+    color: #9A7B2F;
+    transform: rotate(0deg);
+    position: relative;
+  }
+  .decision-diamond::before {
+    content: '◆';
+    margin-right: 8px;
+    opacity: 0.6;
+  }
+  .decision-branches {
+    display: flex;
+    gap: clamp(16px, 2vw, 32px);
+    justify-content: center;
+  }
+  .branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .branch-label {
+    font-size: clamp(10px, 0.9vw, 13px);
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 8px;
+  }
+  .branch-yes { background: rgba(18,108,98,0.12); color: #0E554D; }
+  .branch-no { background: rgba(192,57,43,0.1); color: #C0392B; }
+  .branch-box {
+    padding: clamp(8px, 0.8vw, 14px) clamp(14px, 1.4vw, 24px);
+    border-radius: 10px;
+    font-size: clamp(10px, 1vw, 14px);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    text-align: center;
+    color: var(--text-secondary);
+  }
+
+  /* ===== COVER SLIDE ===== */
+  .cover-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: clamp(12px, 1.5vw, 24px);
+  }
+  .cover-logo {
+    font-size: clamp(60px, 8vw, 120px);
+    line-height: 1;
+    margin-bottom: clamp(8px, 1vw, 16px);
+  }
+  .cover-title {
+    font-size: clamp(32px, 5vw, 72px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(135deg, #126C62 0%, #1A8A7D 50%, #C69B57 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 4s ease infinite;
+    background-size: 200% 200%;
+  }
+  .cover-subtitle {
+    font-size: clamp(14px, 1.8vw, 26px);
+    color: var(--text-secondary);
+    font-weight: 400;
+    max-width: 600px;
+  }
+  .cover-roles {
+    display: flex;
+    gap: clamp(12px, 1.5vw, 24px);
+    margin-top: clamp(12px, 1.5vw, 24px);
+  }
+  .role-chip {
+    padding: clamp(8px, 0.8vw, 12px) clamp(16px, 1.6vw, 28px);
+    border-radius: 50px;
+    font-size: clamp(11px, 1.1vw, 15px);
+    font-weight: 600;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    transition: all var(--transition-fast) ease;
+  }
+  .role-chip:hover {
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  /* ===== END SLIDE ===== */
+  .end-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 20px;
+  }
+  .end-title {
+    font-size: clamp(36px, 5vw, 80px);
+    font-weight: 900;
+    background: linear-gradient(135deg, #126C62, #C69B57, #1A8A7D);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s ease infinite;
+    background-size: 200% 200%;
+  }
+
+  /* ===== VERTICAL FLOW ===== */
+  .vertical-flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(4px, 0.5vw, 8px);
+  }
+  .v-arrow {
+    color: var(--text-muted);
+    font-size: clamp(14px, 1.4vw, 20px);
+  }
+
+  /* ===== NAV BAR ===== */
+  .nav-bar {
+    position: fixed;
+    bottom: clamp(16px, 2vw, 28px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(18,108,98,0.12);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    z-index: 100;
+    transition: opacity var(--transition-fast) ease;
+  }
+  .nav-btn {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast) ease;
+  }
+  .nav-btn:hover {
+    background: rgba(18,108,98,0.08);
+    color: var(--primary);
+    border-color: rgba(18,108,98,0.3);
+  }
+  .nav-btn:active { transform: scale(0.92); }
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .nav-progress {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.3;
+    transition: all var(--transition-fast) ease;
+    cursor: pointer;
+  }
+  .nav-dot.active {
+    background: var(--primary);
+    opacity: 1;
+    width: 22px;
+    border-radius: 4px;
+  }
+  .nav-dot:hover { opacity: 0.7; }
+
+  .nav-counter {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-family: 'Inter', monospace;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  /* ===== PAGE DROPDOWN ===== */
+  .page-dropdown {
+    position: fixed;
+    bottom: clamp(72px, 8vw, 96px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 8px;
+    z-index: 101;
+    max-height: 60vh;
+    overflow-y: auto;
+    min-width: 280px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all var(--transition-fast) ease;
+  }
+  .page-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+  }
+  .page-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast) ease;
+  }
+  .page-dropdown-item:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+  }
+  .page-dropdown-item.active {
+    background: rgba(18, 108, 98, 0.1);
+    color: var(--primary);
+    font-weight: 600;
+  }
+  .page-dropdown-item .item-num {
+    font-weight: 700;
+    font-family: 'Inter', monospace;
+    font-size: 11px;
+    min-width: 24px;
+    text-align: center;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgba(18,108,98,0.06);
+  }
+
+  /* ===== FULLSCREEN BTN ===== */
+  .fullscreen-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 100;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast) ease;
+  }
+  .fullscreen-btn:hover {
+    color: var(--primary);
+    border-color: rgba(18,108,98,0.3);
+  }
+
+  /* ===== MINI DIAGRAM ELEMENTS ===== */
+  .split-row {
+    display: flex;
+    gap: clamp(8px, 1vw, 16px);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .mini-card {
+    flex: 1;
+    min-width: 200px;
+    max-width: 350px;
+    padding: clamp(12px, 1.2vw, 20px);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+  }
+  .mini-card-title {
+    font-size: clamp(12px, 1.2vw, 16px);
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mini-card ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mini-card ul li {
+    font-size: clamp(10px, 0.95vw, 13px);
+    color: var(--text-secondary);
+    padding-left: 14px;
+    position: relative;
+  }
+  .mini-card ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .slide.active .anim-item {
+    animation: fadeInUp 0.5s ease forwards;
+    opacity: 0;
+  }
+  .slide.active .anim-item:nth-child(1) { animation-delay: 0.1s; }
+  .slide.active .anim-item:nth-child(2) { animation-delay: 0.2s; }
+  .slide.active .anim-item:nth-child(3) { animation-delay: 0.3s; }
+  .slide.active .anim-item:nth-child(4) { animation-delay: 0.4s; }
+  .slide.active .anim-item:nth-child(5) { animation-delay: 0.5s; }
+  .slide.active .anim-item:nth-child(6) { animation-delay: 0.6s; }
+  .slide.active .anim-item:nth-child(7) { animation-delay: 0.7s; }
+  .slide.active .anim-item:nth-child(8) { animation-delay: 0.8s; }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 4px; }
+
+  /* ===== SLIDE ILLUSTRATION ===== */
+  .slide-illust {
+    position: absolute;
+    right: clamp(24px, 4vw, 60px);
+    top: clamp(60px, 8vh, 100px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .slide-illust img {
+    max-height: clamp(120px, 18vh, 220px);
+    max-width: clamp(120px, 18vh, 220px);
+    object-fit: contain;
+  }
+  .slide.active .slide-illust {
+    animation: fadeInUp 0.8s 0.3s ease forwards;
+    opacity: 0;
+  }
+  /* Phone screenshot in slide */
+  .slide-phone {
+    display: flex;
+    justify-content: center;
+    gap: clamp(8px, 1vw, 16px);
+    margin: clamp(4px, 0.5vw, 8px) 0;
+  }
+  .slide-phone img {
+    max-height: clamp(180px, 28vh, 320px);
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: all var(--transition-fast) ease;
+  }
+  .slide-phone img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  /* Cover app image */
+  .cover-app-img {
+    max-height: clamp(120px, 16vh, 200px);
+    object-fit: contain;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  }
+  /* Lightbox overlay for expanded image */
+  .lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    cursor: zoom-out;
+  }
+  .lightbox-overlay.open {
+    opacity: 1;
+    visibility: visible;
+  }
+  .lightbox-overlay img {
+    max-width: 92vw;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+
+  /* ===== HIGHLIGHT TAG ===== */
+  .hl { font-weight: 700; }
+  .hl-blue { color: var(--primary); }
+  .hl-green { color: #0E554D; }
+  .hl-orange { color: #A8813E; }
+  .hl-red { color: #C0392B; }
+  .hl-purple { color: #6C5B7B; }
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<div class="presentation" id="presentation">
+
+  <!-- ===== SLIDE 0: COVER ===== -->
+  <div class="slide active" data-slide="0">
+    <div class="slide-content cover-content">
+      <div class="cover-title">BuyDi Ecosystem</div>
+      <div class="cover-subtitle">Core Loop Architecture — ระบบ Fulloop ครบจบทุก Flow ตั้งแต่ Buyer, Seller, Affiliate จนถึง Admin</div>
+      <div class="cover-roles">
+        <div class="role-chip anim-item" style="border-color: rgba(18,108,98,0.3); color: var(--primary);">🧑‍💼 Buyer</div>
+        <div class="role-chip anim-item" style="border-color: rgba(18,108,98,0.25); color: #0E554D;">🏪 Seller</div>
+        <div class="role-chip anim-item" style="border-color: rgba(108,91,123,0.3); color: #6C5B7B;">📣 Affiliate</div>
+        <div class="role-chip anim-item" style="border-color: rgba(198,155,87,0.3); color: #A8813E;">⚙️ Admin</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 1: BuyDi Ecosystem Overview ===== -->
+  <div class="slide" data-slide="1">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Overview</div>
+      <div class="slide-number">01 / 13</div>
+    </div>
+    <div class="slide-title">BuyDi Ecosystem<br>& Core Loop</div>
+    <div class="slide-subtitle">4 Roles หมุนเวียนเป็น Loop — Buyer ซื้อ → Seller ขาย → Affiliate โปรโมท → Admin ดูแล</div>
+    <div class="slide-content">
+      <div class="cards-grid cols-4" style="margin-top: 24px;">
+        <div class="card anim-item">
+          <div class="card-icon">🧑‍💼</div>
+          <div class="card-title">Buyer</div>
+          <div class="card-desc">เลือกสินค้า(ผ่าน Aff Link) สั่งซื้อ ชำระเงิน ติดตามสถานะ คืนสินค้า/ยกเลิก</div>
+          <div class="card-tag tag-blue">Traffic → Payment</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">🏪</div>
+          <div class="card-title">Seller</div>
+          <div class="card-desc">สมัคร(ข้อมูลร้าน ภาษี/ธนาคาร บัตร/ใบอนุญาต) ลงสินค้า จัดส่ง ถอนเงิน</div>
+          <div class="card-tag tag-green">Register → Revenue</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">📣</div>
+          <div class="card-title">Affiliate</div>
+          <div class="card-desc">สมัคร → Admin อนุมัติ → สร้าง Aff Link → แชร์ → รับ Commission → ถอนเงิน</div>
+          <div class="card-tag tag-purple">Share → Commission</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">⚙️</div>
+          <div class="card-title">Admin</div>
+          <div class="card-desc">อนุมัติ Vendor/Affiliate ตรวจสินค้า จัดการถอนเงิน/Payout ดูแลระบบ</div>
+          <div class="card-tag tag-orange">Verify → Payout</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 2: Buyer Journey ===== -->
+  <div class="slide" data-slide="2">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Buyer</div>
+      <div class="slide-number">02 / 13</div>
+    </div>
+    <div class="slide-title">Buyer Journey</div>
+    <div class="slide-subtitle">From Traffic to Payment — เส้นทางตั้งแต่เข้าเว็บจนชำระเงินสำเร็จ</div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">🔗</span> สินค้า(Aff Link)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">🛒</span> Add To Cart</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">📝</span> Checkout(กรอกที่อยู่ + เลือกขนส่ง)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">💳</span> ชำระเงิน</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">📍</span> ติดตามออเดอร์</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">📦</span> รับสินค้า(Delivered)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Order Completed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 3: Order Status State Machine ===== -->
+  <div class="slide" data-slide="3">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Order Flow</div>
+      <div class="slide-number">03 / 13</div>
+    </div>
+    <div class="slide-title">Order Status State Machine</div>
+    <div class="slide-subtitle">Happy Path — สถานะออเดอร์ตั้งแต่สั่งจนจบ</div>
+    <div class="slide-illust"><img src="images/Notication.png" alt="Notification"></div>
+    <div class="slide-content">
+      <div class="state-machine anim-item">
+        <div class="state-node highlight-blue">💳 Pending Payment</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-blue">📝 Pending</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-amber">📦 Processing</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-purple">🚚 Shipped</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-green">✅ Delivered</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-green">🏁 Completed</div>
+      </div>
+      <div class="section-label anim-item" style="margin-top: 24px;">BRANCHING STATES</div>
+      <div class="split-row anim-item">
+        <div class="mini-card">
+          <div class="mini-card-title"><span style="color:#C0392B;">⚠️</span> Cancelled</div>
+          <ul>
+            <li>Buyer/Seller ยกเลิกก่อน Processing</li>
+            <li>Timeout ไม่ชำระภายในเวลา</li>
+          </ul>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title"><span style="color:#A8813E;">🔄</span> Return Approval → Waiting Product → Product Returned → Return Success</div>
+        </div>
+        <div class="mini-card">
+          <div class="mini-card-title"><span style="color:#6C5B7B;">⚖️</span> Debate (ไกล่เกลี่ย)</div>
+          <ul>
+            <li>เมื่อ Seller ไม่อนุมัติคืนสินค้า</li>
+            <li>Admin ตัดสิน</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 4: Return, Refund & Dispute ===== -->
+  <div class="slide" data-slide="4">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Dispute</div>
+      <div class="slide-number">04 / 13</div>
+    </div>
+    <div class="slide-title">Return, Refund &<br>Dispute Resolution</div>
+    <div class="slide-subtitle">เส้นทางการคืนสินค้า คืนเงิน และการไกล่เกลี่ย</div>
+    <div class="slide-illust"><img src="images/After-Sale.png" alt="After Sale"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-red"><span class="icon">🙋</span> Buyer ยื่นคำร้อง</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">🔍</span> System ตรวจสอบ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-amber"><span class="icon">🏪</span> Seller ตอบรับ/ปฏิเสธ</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 20px;">IF SELLER ตอบรับ</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-green"><span class="icon">📦</span> Buyer ส่งคืนสินค้า</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Seller ยืนยันรับ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">💰</span> Refund ดำเนินการ</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 16px;">IF SELLER ปฏิเสธ → DISPUTE</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-red"><span class="icon">⚖️</span> Admin Review</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-purple"><span class="icon">📋</span> ตรวจหลักฐาน</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-amber"><span class="icon">🔨</span> ตัดสินผล</div>
+        </div>
+        <div class="split-row anim-item" style="margin-top: 16px;">
+          <div class="mini-card" style="border-color: rgba(18,108,98,0.2);">
+            <div class="mini-card-title" style="color:#0E554D;">✅ Buyer ชนะ</div>
+            <ul><li>Full/Partial Refund</li><li>Seller ถูกเตือน/แบน</li></ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(192,57,43,0.2);">
+            <div class="mini-card-title" style="color:#C0392B;">❌ Seller ชนะ</div>
+            <ul><li>ปิดเคส ไม่คืนเงิน</li><li>แจ้ง Buyer เหตุผล</li></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 5: Seller Registration ===== -->
+  <div class="slide" data-slide="5">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Seller</div>
+      <div class="slide-number">05 / 13</div>
+    </div>
+    <div class="slide-title">Seller Registration &<br>Verification Pipeline</div>
+    <div class="slide-subtitle">ขั้นตอนสมัครร้านค้า ตั้งแต่สมัครจนเปิดขาย</div>
+    <div class="slide-illust"><img src="images/Password-recovery.png" alt="Verification"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">📝</span> สมัครร้านค้า(ข้อมูลร้าน ภาษี/ธนาคาร บัตร/ใบอนุญาต)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">🔍</span> Admin Review</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Approved/Rejected</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">📦</span> ลงสินค้า/แก้ไขสินค้า</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">🔍</span> Admin ตรวจสอบ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Approved</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">🏪</span> เปิดขาย</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 24px;">VERIFICATION REQUIREMENTS</div>
+        <div class="cards-grid cols-3 anim-item">
+          <div class="card">
+            <div class="card-icon">🏢</div>
+            <div class="card-title">ข้อมูลร้าน</div>
+            <div class="card-desc">ชื่อร้าน หมวดหมู่สินค้า ที่อยู่</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">📊</div>
+            <div class="card-title">ภาษี/ธนาคาร</div>
+            <div class="card-desc">เลขประจำตัวผู้เสียภาษี บัญชีธนาคาร</div>
+          </div>
+          <div class="card">
+            <div class="card-icon">🪪</div>
+            <div class="card-title">บัตร/ใบอนุญาต</div>
+            <div class="card-desc">บัตรประชาชน ใบอนุญาตหลักฐาน</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 6: Seller Fulfillment ===== -->
+  <div class="slide" data-slide="6">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Seller</div>
+      <div class="slide-number">06 / 13</div>
+    </div>
+    <div class="slide-title">Seller Fulfillment &<br>Revenue Trigger</div>
+    <div class="slide-subtitle">ขั้นตอนจัดส่งสินค้า จนถึงรับรายได้</div>
+    <div class="slide-illust"><img src="images/CharacterWithPuzzle.png" alt="Business"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">🔔</span> รับ Order</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">✅</span> ยืนยันออเดอร์</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">📦</span> Pack สินค้า</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-purple"><span class="icon">🚚</span> ส่งพัสดุ</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step"><span class="icon">📍</span> Tracking Update</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Delivered</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">⏰</span> Hold Period (3d)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green" style="border-color: rgba(18,108,98,0.4);"><span class="icon">💰</span> Revenue Released</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 20px;">REVENUE DEDUCTIONS</div>
+        <div class="split-row anim-item">
+          <div class="mini-card">
+            <div class="mini-card-title">💸 ค่าธรรมเนียม</div>
+            <ul>
+              <li>Platform Fee (ค่าแพลตฟอร์ม)</li>
+              <li>Payment Gateway Fee</li>
+              <li>Affiliate Commission (ถ้ามี)</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">📊 สูตรคำนวณ</div>
+            <ul>
+              <li>Revenue = Order Amount</li>
+              <li>− Platform Fee %</li>
+              <li>− PG Fee − Affiliate Comm</li>
+              <li>= Net Seller Income</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 7: Affiliate Journey ===== -->
+  <div class="slide" data-slide="7">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Affiliate</div>
+      <div class="slide-number">07 / 13</div>
+    </div>
+    <div class="slide-title">Affiliate User Journey<br>& Attribution</div>
+    <div class="slide-subtitle">เส้นทาง Affiliate ตั้งแต่สร้างลิงก์จนรับค่าคอมฯ</div>
+    <div class="slide-illust"><img src="images/Social-Media.png" alt="Social Media"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-purple"><span class="icon">📝</span> สมัคร Affiliate</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">✅</span> Admin อนุมัติ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-purple"><span class="icon">🔗</span> สร้าง Affiliate Link</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">📣</span> แชร์/โปรโมท</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">👆</span> User คลิกลิงก์</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-amber"><span class="icon">🍪</span> Cookie Attribution</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">🛒</span> User ซื้อสินค้า</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Order Completed</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">💰</span> Commission คำนวณ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green" style="border-color: rgba(18,108,98,0.4);"><span class="icon">🏦</span> Withdraw</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 20px;">ATTRIBUTION MODEL</div>
+        <div class="cards-grid cols-2 anim-item">
+          <div class="card">
+            <div class="card-title">Last Click</div>
+            <div class="card-desc">คลิกสุดท้ายก่อนซื้อ ได้ Commission ทั้งหมด</div>
+          </div>
+          <div class="card">
+            <div class="card-title">Cookie Window</div>
+            <div class="card-desc">30 วัน — ถ้าซื้อภายใน 30 วันหลังคลิก</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 8: Commission Lifecycle ===== -->
+  <div class="slide" data-slide="8">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Commission</div>
+      <div class="slide-number">08 / 13</div>
+    </div>
+    <div class="slide-title">Commission Lifecycle<br>State Machine</div>
+    <div class="slide-subtitle">สถานะ Commission ตั้งแต่เกิดจนถอนเงินได้</div>
+    <div class="slide-content">
+      <div class="state-machine anim-item">
+        <div class="state-node highlight-blue">📝 Create Order</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-blue">✅ Order Completed</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-amber">⏳ อนุมัติ</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-green">💰 ได้ Balance</div>
+        <div class="state-arrow">→</div>
+        <div class="state-node highlight-green" style="border-color: rgba(18,108,98,0.4);">🏦 ถอน</div>
+      </div>
+      <div class="section-label anim-item" style="margin-top: 32px;">EXCEPTIONS</div>
+      <div class="cards-grid cols-2 anim-item">
+        <div class="card" style="border-color: rgba(192,57,43,0.2);">
+          <div class="card-icon">❌</div>
+          <div class="card-title" style="color: #C0392B;">Order Cancelled</div>
+          <div class="card-desc">ไม่อนุมัติ Commission</div>
+        </div>
+        <div class="card" style="border-color: rgba(198,155,87,0.25);">
+          <div class="card-icon">🏦</div>
+          <div class="card-title" style="color: #9A7B2F;">ถอนเงิน</div>
+          <div class="card-desc">Admin อนุมัติ(จ่ายแล้ว) or Admin ไม่อนุมัติ(คืน Balance)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 9: Withdrawal & Payout Flow ===== -->
+  <div class="slide" data-slide="9">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Finance</div>
+      <div class="slide-number">09 / 13</div>
+    </div>
+    <div class="slide-title">Withdrawal &<br>Payout Flow</div>
+    <div class="slide-subtitle">เส้นทางการสร้าง Withdrawal Request — ทั้งแบบ Manual และ Auto</div>
+    <div class="slide-content">
+      <div class="flow-container" style="gap: clamp(6px, 0.8vw, 12px);">
+        <!-- ROW 1: Three source columns -->
+        <div class="section-label anim-item" style="margin-bottom: 4px;">WITHDRAWAL SOURCES</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(8px,1vw,14px);" class="anim-item">
+          <div class="card" style="padding: clamp(10px,1vw,16px); border-color: rgba(18,108,98,0.25);">
+            <div class="card-title" style="font-size:clamp(11px,1.1vw,15px);">💰 Wallet Withdrawal</div>
+            <div class="card-desc">Affiliate ถอน Commission<br>Seller ถอนจาก Wallet</div>
+            <div class="card-tag tag-orange">Manual → Admin Review</div>
+          </div>
+          <div class="card" style="padding: clamp(10px,1vw,16px); border-color: rgba(198,155,87,0.25);">
+            <div class="card-title" style="font-size:clamp(11px,1.1vw,15px);">🧑‍💼 Buyer Triggers</div>
+            <div class="card-desc">Cancel (จ่ายแล้ว)<br>Return success / Dispute ชนะ</div>
+            <div class="card-tag tag-green">Auto Approved</div>
+          </div>
+          <div class="card" style="padding: clamp(10px,1vw,16px); border-color: rgba(108,91,123,0.25);">
+            <div class="card-title" style="font-size:clamp(11px,1.1vw,15px);">🏪 Seller Triggers</div>
+            <div class="card-desc">Seller cancel (buyer จ่ายแล้ว)<br>Accept return / Dispute Buyer wins</div>
+            <div class="card-tag tag-green">Auto Approved</div>
+          </div>
+        </div>
+        <!-- ROW 2: Admin Review -->
+        <div class="section-label anim-item" style="margin-bottom: 4px;">ADMIN REVIEW (WALLET WITHDRAWAL)</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-orange"><span class="icon">🔍</span> Pending Approval</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">👤</span> Admin Reviews</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Approve</div>
+          <span style="color:var(--text-muted); font-size:clamp(10px,1vw,14px); margin: 0 4px;">หรือ</span>
+          <div class="flow-step highlight-red"><span class="icon">❌</span> Reject → คืน Wallet</div>
+        </div>
+        <!-- ROW 3: Payout Process -->
+        <div class="section-label anim-item" style="margin-bottom: 4px;">ADMIN PAYOUT PROCESS</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-green" style="border-color:rgba(18,108,98,0.35);"><span class="icon">✅</span> Approved</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">📋</span> Create Batch</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-amber"><span class="icon">📄</span> Export to Bank</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-purple"><span class="icon">🏦</span> Bank โอนเงิน</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green" style="border-color:rgba(18,108,98,0.4);"><span class="icon">🏁</span> Close Batch</div>
+        </div>
+        <!-- ROW 4: After Close -->
+        <div class="section-label anim-item" style="margin-bottom: 4px;">AFTER CLOSE BATCH</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Transfer OK → Completed + Payment Voucher</div>
+          <span style="color:var(--text-muted); font-size:clamp(10px,1vw,14px); margin: 0 8px;">|</span>
+          <div class="flow-step highlight-red"><span class="icon">❌</span> Transfer Failed → กลับเป็น Approved รอรอบถัดไป</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 10: Non-COD Shipping ===== -->
+  <div class="slide" data-slide="10">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Shipping</div>
+      <div class="slide-number">10 / 13</div>
+    </div>
+    <div class="slide-title">Non-COD Shipping Logic<br>& Weight Check</div>
+    <div class="slide-subtitle">ระบบจัดส่งแบบชำระเงินล่วงหน้า + ตรวจน้ำหนัก</div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-green"><span class="icon">💳</span> Seller ยืนยันจัดส่ง</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">🚚</span> ขนส่งรับพัสดุ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">⚖️</span> ตรวจน้ำหนัก</div>
+        </div>
+        <div class="decision-tree anim-item" style="margin-top: 16px;">
+          <div class="decision-node decision-diamond">Actual vs Estimated Weight?</div>
+          <div class="decision-branches" style="margin-top: 12px;">
+            <div class="branch">
+              <div class="branch-label branch-no">ตรงกัน</div>
+              <div class="branch-box"><span class="icon">📄</span> RS Document<br><span class="icon">🚚</span> ส่งปกติ</div>
+            </div>
+            <div class="branch">
+              <div class="branch-label branch-yes">Actual > Estimated</div>
+              <div class="branch-box"><span class="icon">💸</span> Seller จ่ายส่วนต่าง<br><span class="icon">📄</span> RSA Document</div>
+            </div>
+            <div class="branch">
+              <div class="branch-label" style="background:rgba(108,91,123,0.12);color:#6C5B7B;">Actual < Estimated</div>
+              <div class="branch-box"><span class="icon">💰</span> ส่วนต่าง = BuyDi Revenue</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-row anim-item" style="margin-top: 16px;">
+          <div class="flow-step highlight-green"><span class="icon">✅</span> สำเร็จ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">📦</span> Delivered</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">⏰</span> Completed (3 วัน)</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green" style="border-color: rgba(18,108,98,0.4);"><span class="icon">💰</span> Credit to Seller Wallet</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 16px;">IF FAILED DELIVERY</div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-red"><span class="icon">❌</span> ส่งไม่สำเร็จ</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">🔄</span> Retry?</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-red"><span class="icon">📦</span> คืนสินค้าให้ Seller</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-red"><span class="icon">❌</span> ยกเลิก/คืนเงิน Buyer</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 11: COD Shipping ===== -->
+  <div class="slide" data-slide="11">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Shipping</div>
+      <div class="slide-number">11 / 13</div>
+    </div>
+    <div class="slide-title">COD Shipping &<br>Money Reconciliation</div>
+    <div class="slide-subtitle">ระบบเก็บเงินปลายทาง + การกระทบยอด</div>
+    <div class="slide-illust"><img src="images/Notication.png" alt="Notification"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-amber"><span class="icon">📦</span> COD Order</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">🚚</span> จัดส่ง</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">💵</span> Buyer จ่ายเงิน COD</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-purple"><span class="icon">🚚</span> ขนส่งเก็บเงิน</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-amber"><span class="icon">📮</span> ปณ.โอน COD ให้ BuyDi</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">📋</span> Generate Transaction ID + Validate</div>
+        </div>
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">✅</span> Update Status</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-blue"><span class="icon">⏳</span> Waiting COD Settlement</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">✅</span> Order Completed</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">💰</span> หักค่าขนส่ง → Available for Withdrawal</div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 24px;">COD RISKS</div>
+        <div class="cards-grid cols-4 anim-item">
+          <div class="card" style="border-color: rgba(192,57,43,0.2);">
+            <div class="card-icon">🚫</div>
+            <div class="card-title">ปฏิเสธรับพัสดุ</div>
+            <div class="card-desc">ส่งคืน Seller — ค่าส่งไป-กลับ หัก Seller</div>
+          </div>
+          <div class="card" style="border-color: rgba(198,155,87,0.25);">
+            <div class="card-icon">⏰</div>
+            <div class="card-title">Remittance Delay</div>
+            <div class="card-desc">ขนส่งโอนช้า 3-7 วัน ระบบต้อง track</div>
+          </div>
+          <div class="card" style="border-color: rgba(108,91,123,0.25);">
+            <div class="card-icon">📊</div>
+            <div class="card-title">ยอดไม่ตรง</div>
+            <div class="card-desc">Auto-flag + Manual review ถ้ายอดไม่ match</div>
+          </div>
+          <div class="card" style="border-color: rgba(192,57,43,0.2);">
+            <div class="card-icon">❌</div>
+            <div class="card-title">ยกเลิก COD</div>
+            <div class="card-desc">ไม่มี Refund (ยังไม่จ่ายเงิน)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 12: Shipping Cost Adjustment ===== -->
+  <div class="slide" data-slide="12">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Logic</div>
+      <div class="slide-number">12 / 13</div>
+    </div>
+    <div class="slide-title">Shipping Cost<br>Adjustment Decision Tree</div>
+    <div class="slide-subtitle">ตัดสินใจเรื่องค่าส่ง — GetShip Webhook ได้น้ำหนักจริง</div>
+    <div class="slide-illust"><img src="images/Question.png" alt="Question"></div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="split-row anim-item">
+          <div class="mini-card">
+            <div class="mini-card-title">1️⃣ น้ำหนักตรง</div>
+            <ul>
+              <li>RS Document</li>
+              <li>ไม่ต้องปรับ</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">2️⃣ Actual > Estimated</div>
+            <ul>
+              <li>RS Document + RSA Document</li>
+              <li>หักจาก Seller Wallet</li>
+              <li>แจ้ง Seller</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">3️⃣ Actual < Estimated</div>
+            <ul>
+              <li>RS Document</li>
+              <li>ส่วนต่าง = BuyDi Revenue</li>
+              <li>ไม่ต้องแจ้ง Seller</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 13: Admin Gatekeeper ===== -->
+  <div class="slide" data-slide="13">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Admin</div>
+      <div class="slide-number">13 / 13</div>
+    </div>
+    <div class="slide-title">Admin Gatekeeper &<br>Verification Pipelines</div>
+    <div class="slide-subtitle">ระบบตรวจสอบ อนุมัติ และจัดการข้อมูล</div>
+    <div class="slide-illust"><img src="images/Search.png" alt="Search"></div>
+    <div class="slide-content">
+      <div class="cards-grid cols-2">
+        <div class="card anim-item">
+          <div class="card-icon">🏪</div>
+          <div class="card-title">Seller Verification</div>
+          <div class="card-desc">ตรวจเอกสาร ID / ใบอนุญาต<br>Approve / Reject</div>
+          <div class="card-tag tag-purple">Manual</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">📣</div>
+          <div class="card-title">Affiliate Verification</div>
+          <div class="card-desc">ตรวจ Social Media / Bank<br>Approve / Reject</div>
+          <div class="card-tag tag-purple">Manual</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">📦</div>
+          <div class="card-title">Product Approval</div>
+          <div class="card-desc">ตรวจสินค้า / คุณภาพ / ข้อมูล<br>Approve / Reject</div>
+          <div class="card-tag tag-purple">Manual</div>
+        </div>
+        <div class="card anim-item">
+          <div class="card-icon">💸</div>
+          <div class="card-title">Withdrawal Approval</div>
+          <div class="card-desc">ตรวจสอบยอดถอน ≥ threshold<br>Manual review สำหรับยอดสูง</div>
+          <div class="card-tag tag-purple">Manual</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 14: THANK YOU ===== -->
+  <div class="slide" data-slide="14">
+    <div class="slide-content end-content">
+      <div style="position:relative; margin-bottom: clamp(8px,1.5vw,20px);">
+        <div style="width: clamp(80px,10vw,130px); height: clamp(80px,10vw,130px); border-radius: 50%; background: linear-gradient(135deg, rgba(18,108,98,0.1), rgba(198,155,87,0.1)); display:flex; align-items:center; justify-content:center; margin: 0 auto;">
+          <img src="images/Sussess.png" alt="Success" style="max-height: clamp(60px, 8vw, 100px); object-fit: contain;">
+        </div>
+      </div>
+      <div class="end-title" style="margin-bottom: clamp(4px,0.5vw,8px);">BuyDi Fulloop</div>
+      <div class="slide-subtitle" style="max-width: 550px; text-align:center; line-height:1.6;">ครบจบทุก Flow — ระบบ Ecosystem ที่เชื่อมทุก Role เข้าด้วยกัน</div>
+      <div style="width: 60px; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); border-radius: 2px; margin: clamp(16px,2vw,28px) auto;"></div>
+      <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: clamp(10px,1.2vw,18px); max-width: 700px; width: 100%; margin-top: clamp(4px,0.5vw,8px);">
+        <div class="card anim-item" style="text-align:center; padding: clamp(14px,1.5vw,24px) clamp(8px,0.8vw,14px); border-color: rgba(18,108,98,0.2);">
+          <div style="font-size: clamp(28px,3vw,44px); margin-bottom: 6px;">🧑‍💼</div>
+          <div style="font-size: clamp(12px,1.2vw,16px); font-weight:700; color:var(--primary);">Buyer</div>
+          <div style="font-size: clamp(9px,0.85vw,12px); color:var(--text-muted); margin-top:4px;">Traffic → Payment</div>
+        </div>
+        <div class="card anim-item" style="text-align:center; padding: clamp(14px,1.5vw,24px) clamp(8px,0.8vw,14px); border-color: rgba(18,108,98,0.15);">
+          <div style="font-size: clamp(28px,3vw,44px); margin-bottom: 6px;">🏪</div>
+          <div style="font-size: clamp(12px,1.2vw,16px); font-weight:700; color:#0E554D;">Seller</div>
+          <div style="font-size: clamp(9px,0.85vw,12px); color:var(--text-muted); margin-top:4px;">Register → Revenue</div>
+        </div>
+        <div class="card anim-item" style="text-align:center; padding: clamp(14px,1.5vw,24px) clamp(8px,0.8vw,14px); border-color: rgba(108,91,123,0.2);">
+          <div style="font-size: clamp(28px,3vw,44px); margin-bottom: 6px;">📣</div>
+          <div style="font-size: clamp(12px,1.2vw,16px); font-weight:700; color:#6C5B7B;">Affiliate</div>
+          <div style="font-size: clamp(9px,0.85vw,12px); color:var(--text-muted); margin-top:4px;">Share → Commission</div>
+        </div>
+        <div class="card anim-item" style="text-align:center; padding: clamp(14px,1.5vw,24px) clamp(8px,0.8vw,14px); border-color: rgba(198,155,87,0.2);">
+          <div style="font-size: clamp(28px,3vw,44px); margin-bottom: 6px;">⚙️</div>
+          <div style="font-size: clamp(12px,1.2vw,16px); font-weight:700; color:#A8813E;">Admin</div>
+          <div style="font-size: clamp(9px,0.85vw,12px); color:var(--text-muted); margin-top:4px;">Verify → Payout</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== LIGHTBOX ===== -->
+<div class="lightbox-overlay" id="lightbox" onclick="this.classList.remove('open')">
+  <img id="lightboxImg" src="" alt="Diagram">
+</div>
+
+<!-- ===== NAVIGATION ===== -->
+<button class="fullscreen-btn" id="fullscreenBtn" title="Fullscreen (F)">⛶</button>
+
+<div class="page-dropdown" id="pageDropdown"></div>
+
+<div class="nav-bar" id="navBar">
+  <button class="nav-btn" id="homeBtn" title="Home (H)" style="font-size: 18px;">⌂</button>
+  <button class="nav-btn" id="prevBtn" title="Previous (←)">‹</button>
+  <div class="nav-progress" id="navProgress"></div>
+  <button class="nav-btn" id="nextBtn" title="Next (→)">›</button>
+  <div class="nav-counter" id="navCounter">1 / 15</div>
+  <button class="nav-btn" id="menuBtn" title="Slide Menu">☰</button>
+</div>
+
+<script>
+// Lightbox function (global scope)
+function openLightbox(src) {
+  const lb = document.getElementById('lightbox');
+  document.getElementById('lightboxImg').src = src;
+  lb.classList.add('open');
+}
+
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+  let currentSlide = 0;
+  let animTimer = null;
+  let dropdownOpen = false;
+
+  const slideTitles = [
+    'Cover — BuyDi Ecosystem',
+    'Ecosystem & Core Loop Overview',
+    'Buyer Journey: Traffic → Payment',
+    'Order Status State Machine',
+    'Return, Refund & Dispute',
+    'Seller Registration & Verification',
+    'Seller Fulfillment & Revenue',
+    'Affiliate Journey & Attribution',
+    'Commission Lifecycle',
+    'Withdrawal & Payout Flow',
+    'Non-COD Shipping & Weight Check',
+    'COD Shipping & Reconciliation',
+    'Shipping Cost Decision Tree',
+    'Admin Gatekeeper & Verification',
+    'Thank You — BuyDi Fulloop'
+  ];
+
+  // Build nav dots
+  const navProgress = document.getElementById('navProgress');
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', () => goToSlide(i));
+    navProgress.appendChild(dot);
+  }
+
+  // Build dropdown
+  const dropdown = document.getElementById('pageDropdown');
+  slideTitles.forEach((title, i) => {
+    const item = document.createElement('div');
+    item.className = 'page-dropdown-item' + (i === 0 ? ' active' : '');
+    item.innerHTML = `<span class="item-num">${String(i + 1).padStart(2, '0')}</span> ${title}`;
+    item.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const targetIndex = i;
+      toggleDropdown(false);
+      // Use requestAnimationFrame to ensure dropdown closes first
+      requestAnimationFrame(() => goToSlide(targetIndex));
+    });
+    dropdown.appendChild(item);
+  });
+
+  function goToSlide(index) {
+    if (index === currentSlide || index < 0 || index >= totalSlides) return;
+
+    // Cancel any ongoing animation
+    if (animTimer) {
+      clearTimeout(animTimer);
+      // Clean up all slides immediately
+      slides.forEach(s => {
+        s.classList.remove('active', 'prev');
+        s.style.transform = '';
+      });
+    }
+
+    const prev = slides[currentSlide];
+    const next = slides[index];
+    const goingForward = index > currentSlide;
+
+    // Remove active from previous slide
+    prev.classList.remove('active');
+    if (goingForward) {
+      prev.classList.add('prev');
+    }
+
+    // Set up the incoming slide position before animating
+    next.style.transition = 'none';
+    next.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+    next.style.opacity = '0';
+    next.offsetHeight; // force reflow
+
+    // Enable transitions and animate in
+    next.style.transition = '';
+    next.style.transform = '';
+    next.style.opacity = '';
+    next.classList.add('active');
+
+    currentSlide = index;
+    updateUI();
+
+    animTimer = setTimeout(() => {
+      prev.classList.remove('prev');
+      prev.style.transform = '';
+      animTimer = null;
+    }, 500);
+  }
+
+  function updateUI() {
+    // Counter
+    document.getElementById('navCounter').textContent = `${currentSlide + 1} / ${totalSlides}`;
+
+    // Dots
+    const dots = navProgress.querySelectorAll('.nav-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+
+    // Buttons
+    document.getElementById('prevBtn').disabled = currentSlide === 0;
+    document.getElementById('nextBtn').disabled = currentSlide === totalSlides - 1;
+    document.getElementById('homeBtn').disabled = currentSlide === 0;
+
+    // Dropdown items
+    const items = dropdown.querySelectorAll('.page-dropdown-item');
+    items.forEach((item, i) => item.classList.toggle('active', i === currentSlide));
+  }
+
+  function toggleDropdown(state) {
+    dropdownOpen = state !== undefined ? state : !dropdownOpen;
+    dropdown.classList.toggle('open', dropdownOpen);
+  }
+
+  // Navigation buttons
+  document.getElementById('homeBtn').addEventListener('click', () => goToSlide(0));
+  document.getElementById('prevBtn').addEventListener('click', () => goToSlide(currentSlide - 1));
+  document.getElementById('nextBtn').addEventListener('click', () => goToSlide(currentSlide + 1));
+  document.getElementById('menuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleDropdown();
+  });
+
+  // Fullscreen
+  document.getElementById('fullscreenBtn').addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Keyboard
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') {
+      e.preventDefault();
+      goToSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goToSlide(currentSlide - 1);
+    } else if (e.key === 'Home' || e.key === 'h' || e.key === 'H') {
+      e.preventDefault();
+      goToSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goToSlide(totalSlides - 1);
+    } else if (e.key === 'f' || e.key === 'F') {
+      document.getElementById('fullscreenBtn').click();
+    } else if (e.key === 'Escape') {
+      toggleDropdown(false);
+      document.getElementById('lightbox').classList.remove('open');
+    }
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      diff > 0 ? goToSlide(currentSlide + 1) : goToSlide(currentSlide - 1);
+    }
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (dropdownOpen && !dropdown.contains(e.target) && e.target.id !== 'menuBtn') {
+      toggleDropdown(false);
+    }
+  });
+
+  updateUI();
+})();
+</script>
+</body>
+</html>
