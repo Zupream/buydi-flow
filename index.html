@@ -801,6 +801,10 @@
 
   <!-- ===== SLIDE 0: COVER ===== -->
   <div class="slide active" data-slide="0">
+    <div class="slide-header">
+      <div></div>
+      <div class="slide-number">01 / 17</div>
+    </div>
     <div class="slide-content cover-content">
       <div class="cover-title">BuyDi Ecosystem</div>
       <div class="cover-subtitle">Core Loop Architecture — ระบบ Fulloop ครบจบทุก Flow ตั้งแต่ Buyer, Seller, Affiliate จนถึง Admin</div>
@@ -817,7 +821,7 @@
   <div class="slide" data-slide="1">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Overview</div>
-      <div class="slide-number">01 / 13</div>
+      <div class="slide-number">02 / 17</div>
     </div>
     <div class="slide-title">BuyDi Ecosystem<br>& Core Loop</div>
     <div class="slide-subtitle">4 Roles หมุนเวียนเป็น Loop — Buyer ซื้อ → Seller ขาย → Affiliate โปรโมท → Admin ดูแล</div>
@@ -855,7 +859,7 @@
   <div class="slide" data-slide="2">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Buyer</div>
-      <div class="slide-number">02 / 13</div>
+      <div class="slide-number">03 / 17</div>
     </div>
     <div class="slide-title">Buyer Journey</div>
     <div class="slide-subtitle">From Traffic to Payment — เส้นทางตั้งแต่เข้าเว็บจนชำระเงินสำเร็จ</div>
@@ -885,7 +889,7 @@
   <div class="slide" data-slide="3">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Order Flow</div>
-      <div class="slide-number">03 / 13</div>
+      <div class="slide-number">04 / 17</div>
     </div>
     <div class="slide-title">Order Status State Machine</div>
     <div class="slide-subtitle">Happy Path — สถานะออเดอร์ตั้งแต่สั่งจนจบ</div>
@@ -931,44 +935,62 @@
   <div class="slide" data-slide="4">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Dispute</div>
-      <div class="slide-number">04 / 13</div>
+      <div class="slide-number">05 / 17</div>
     </div>
     <div class="slide-title">Return, Refund &<br>Dispute Resolution</div>
-    <div class="slide-subtitle">เส้นทางการคืนสินค้า คืนเงิน และการไกล่เกลี่ย</div>
-    <div class="slide-illust"><img src="images/After-Sale.png" alt="After Sale"></div>
+    <div class="slide-subtitle">Precondition: Order = Delivered + ภายใน 3 วัน + Buyer แนบหลักฐาน</div>
     <div class="slide-content">
       <div class="flow-container">
         <div class="flow-row anim-item">
           <div class="flow-step highlight-red"><span class="icon">🙋</span> Buyer ยื่นคำร้อง</div>
           <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-orange"><span class="icon">🔍</span> System ตรวจสอบ</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-amber"><span class="icon">🏪</span> Seller ตอบรับ/ปฏิเสธ</div>
+          <div class="flow-step highlight-amber"><span class="icon">🏪</span> Seller ตรวจคำขอ (3 วัน)</div>
         </div>
-        <div class="section-label anim-item" style="margin-top: 20px;">IF SELLER ตอบรับ</div>
-        <div class="flow-row anim-item">
-          <div class="flow-step highlight-green"><span class="icon">📦</span> Buyer ส่งคืนสินค้า</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-green"><span class="icon">✅</span> Seller ยืนยันรับ</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-green"><span class="icon">💰</span> Refund ดำเนินการ</div>
-        </div>
-        <div class="section-label anim-item" style="margin-top: 16px;">IF SELLER ปฏิเสธ → DISPUTE</div>
-        <div class="flow-row anim-item">
-          <div class="flow-step highlight-red"><span class="icon">⚖️</span> Admin Review</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-purple"><span class="icon">📋</span> ตรวจหลักฐาน</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-amber"><span class="icon">🔨</span> ตัดสินผล</div>
-        </div>
-        <div class="split-row anim-item" style="margin-top: 16px;">
-          <div class="mini-card" style="border-color: rgba(18,108,98,0.2);">
-            <div class="mini-card-title" style="color:#0E554D;">✅ Buyer ชนะ</div>
-            <ul><li>Full/Partial Refund</li><li>Seller ถูกเตือน/แบน</li></ul>
+        <div class="section-label anim-item" style="margin-top: 16px;">SELLER เลือก 3 ทาง (ไม่ตอบใน 3 วัน = Auto เลือก A)</div>
+        <div class="split-row anim-item">
+          <div class="mini-card" style="border-color: rgba(18,108,98,0.25);">
+            <div class="mini-card-title" style="color:#0E554D;">A: คืนสินค้า + คืนเงิน</div>
+            <ul>
+              <li>Buyer ส่งคืนภายใน 3 วัน</li>
+              <li>Seller ตรวจของ (3 วัน ไม่ตรวจ = auto approve)</li>
+              <li>Seller รับผิดชอบค่าส่ง 2 ขา</li>
+              <li>Admin คืนเงิน Buyer</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(198,155,87,0.25);">
+            <div class="mini-card-title" style="color:#9A7B2F;">B: คืนเงินอย่างเดียว</div>
+            <ul>
+              <li>ไม่ต้องคืนสินค้า</li>
+              <li>ข้าม process ขนส่ง</li>
+              <li>Seller สละสิทธิ์รับสินค้าคืน</li>
+              <li>Admin คืนเงิน Buyer ทันที</li>
+            </ul>
           </div>
           <div class="mini-card" style="border-color: rgba(192,57,43,0.2);">
-            <div class="mini-card-title" style="color:#C0392B;">❌ Seller ชนะ</div>
-            <ul><li>ปิดเคส ไม่คืนเงิน</li><li>แจ้ง Buyer เหตุผล</li></ul>
+            <div class="mini-card-title" style="color:#C0392B;">C: ไม่อนุมัติ</div>
+            <ul>
+              <li>Seller ใส่เหตุผล</li>
+              <li>Buyer โต้แย้งได้ใน 3 วัน</li>
+              <li>ไม่โต้แย้ง = ปิดเคส (Order Complete)</li>
+              <li>โต้แย้ง → Admin ตัดสิน</li>
+            </ul>
+          </div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 16px;">DISPUTE — ADMIN ตัดสิน (ผลถือเป็นที่สิ้นสุด)</div>
+        <div class="split-row anim-item">
+          <div class="mini-card" style="border-color: rgba(18,108,98,0.2);">
+            <div class="mini-card-title" style="color:#0E554D;">✅ Buyer Win</div>
+            <ul>
+              <li>สินค้าอยู่ที่ Buyer → คืนเงินเต็ม + เก็บสินค้า</li>
+              <li>สินค้าอยู่ที่ Seller → คืนเงินเต็ม + Seller รับค่าส่ง 2 ขา</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(192,57,43,0.2);">
+            <div class="mini-card-title" style="color:#C0392B;">❌ Seller Win</div>
+            <ul>
+              <li>สินค้าอยู่ที่ Buyer → ไม่คืนเงิน + Buyer เก็บสินค้า</li>
+              <li>สินค้าอยู่ที่ Seller → ไม่คืนเงิน + Seller รับค่าส่ง 1 ขา (ขากลับ)</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -979,7 +1001,7 @@
   <div class="slide" data-slide="5">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Seller</div>
-      <div class="slide-number">05 / 13</div>
+      <div class="slide-number">06 / 17</div>
     </div>
     <div class="slide-title">Seller Registration &<br>Verification Pipeline</div>
     <div class="slide-subtitle">ขั้นตอนสมัครร้านค้า ตั้งแต่สมัครจนเปิดขาย</div>
@@ -1028,7 +1050,7 @@
   <div class="slide" data-slide="6">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Seller</div>
-      <div class="slide-number">06 / 13</div>
+      <div class="slide-number">07 / 17</div>
     </div>
     <div class="slide-title">Seller Fulfillment &<br>Revenue Trigger</div>
     <div class="slide-subtitle">ขั้นตอนจัดส่งสินค้า จนถึงรับรายได้</div>
@@ -1053,23 +1075,33 @@
           <div class="flow-arrow">→</div>
           <div class="flow-step highlight-green" style="border-color: rgba(18,108,98,0.4);"><span class="icon">💰</span> Revenue Released</div>
         </div>
-        <div class="section-label anim-item" style="margin-top: 20px;">REVENUE DEDUCTIONS</div>
+        <div class="section-label anim-item" style="margin-top: 20px;">REVENUE DEDUCTIONS (ฐานคำนวณ = ยอดหลังหักส่วนลดร้านค้า ไม่รวมค่าส่ง/ส่วนลดแพลตฟอร์ม)</div>
         <div class="split-row anim-item">
           <div class="mini-card">
             <div class="mini-card-title">💸 ค่าธรรมเนียม</div>
             <ul>
-              <li>Platform Fee (ค่าแพลตฟอร์ม)</li>
-              <li>Payment Gateway Fee</li>
-              <li>Affiliate Commission (ถ้ามี)</li>
+              <li>Platform Fee % (ฐาน = ยอดหลังหักส่วนลดร้าน)</li>
+              <li>ค่าธุรกรรมการชำระเงิน % (ฐาน = ยอดที่ลูกค้าชำระ)</li>
+              <li>Affiliate Commission % (ฐาน = ยอดหลังหักส่วนลดร้าน)</li>
+              <li>ส่วนต่างค่าส่ง (ถ้า Actual > Estimated)</li>
             </ul>
           </div>
           <div class="mini-card">
             <div class="mini-card-title">📊 สูตรคำนวณ</div>
             <ul>
-              <li>Revenue = Order Amount</li>
-              <li>− Platform Fee %</li>
-              <li>− PG Fee − Affiliate Comm</li>
-              <li>= Net Seller Income</li>
+              <li>ยอดหลังหักส่วนลดร้านค้า</li>
+              <li>− Platform Fee % − Affiliate Comm %</li>
+              <li>− ค่าธุรกรรมการชำระเงิน %</li>
+              <li>− ส่วนต่างค่าส่ง (ถ้ามี)</li>
+              <li>= รายได้สุทธิร้านค้า</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">⚠️ กรณี Cancel</div>
+            <ul>
+              <li>ค่าธุรกรรมการชำระเงิน: Platform รับภาระแทน</li>
+              <li>ไม่เรียกเก็บจาก Seller</li>
+              <li>เรียกเก็บเฉพาะ Order = Complete</li>
             </ul>
           </div>
         </div>
@@ -1081,7 +1113,7 @@
   <div class="slide" data-slide="7">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Affiliate</div>
-      <div class="slide-number">07 / 13</div>
+      <div class="slide-number">08 / 17</div>
     </div>
     <div class="slide-title">Affiliate User Journey<br>& Attribution</div>
     <div class="slide-subtitle">เส้นทาง Affiliate ตั้งแต่สร้างลิงก์จนรับค่าคอมฯ</div>
@@ -1130,7 +1162,7 @@
   <div class="slide" data-slide="8">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Commission</div>
-      <div class="slide-number">08 / 13</div>
+      <div class="slide-number">09 / 17</div>
     </div>
     <div class="slide-title">Commission Lifecycle<br>State Machine</div>
     <div class="slide-subtitle">สถานะ Commission ตั้งแต่เกิดจนถอนเงินได้</div>
@@ -1166,7 +1198,7 @@
   <div class="slide" data-slide="9">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Finance</div>
-      <div class="slide-number">09 / 13</div>
+      <div class="slide-number">10 / 17</div>
     </div>
     <div class="slide-title">Withdrawal &<br>Payout Flow</div>
     <div class="slide-subtitle">เส้นทางการสร้าง Withdrawal Request — ทั้งแบบ Manual และ Auto</div>
@@ -1230,7 +1262,7 @@
   <div class="slide" data-slide="10">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Shipping</div>
-      <div class="slide-number">10 / 13</div>
+      <div class="slide-number">11 / 17</div>
     </div>
     <div class="slide-title">Non-COD Shipping Logic<br>& Weight Check</div>
     <div class="slide-subtitle">ระบบจัดส่งแบบชำระเงินล่วงหน้า + ตรวจน้ำหนัก</div>
@@ -1248,7 +1280,7 @@
           <div class="decision-branches" style="margin-top: 12px;">
             <div class="branch">
               <div class="branch-label branch-no">ตรงกัน</div>
-              <div class="branch-box"><span class="icon">📄</span> RS Document<br><span class="icon">🚚</span> ส่งปกติ</div>
+              <div class="branch-box"><span class="icon">📄</span> RS Document (Internal/Admin)<br><span class="icon">🚚</span> ส่งปกติ</div>
             </div>
             <div class="branch">
               <div class="branch-label branch-yes">Actual > Estimated</div>
@@ -1269,15 +1301,15 @@
           <div class="flow-arrow">→</div>
           <div class="flow-step highlight-green" style="border-color: rgba(18,108,98,0.4);"><span class="icon">💰</span> Credit to Seller Wallet</div>
         </div>
-        <div class="section-label anim-item" style="margin-top: 16px;">IF FAILED DELIVERY</div>
+        <div class="section-label anim-item" style="margin-top: 16px;">IF FAILED DELIVERY / ตีกลับ</div>
         <div class="flow-row anim-item">
-          <div class="flow-step highlight-red"><span class="icon">❌</span> ส่งไม่สำเร็จ</div>
-          <div class="flow-arrow">→</div>
-          <div class="flow-step highlight-orange"><span class="icon">🔄</span> Retry?</div>
+          <div class="flow-step highlight-red"><span class="icon">❌</span> ส่งไม่สำเร็จ/ตีกลับ</div>
           <div class="flow-arrow">→</div>
           <div class="flow-step highlight-red"><span class="icon">📦</span> คืนสินค้าให้ Seller</div>
           <div class="flow-arrow">→</div>
           <div class="flow-step highlight-red"><span class="icon">❌</span> ยกเลิก/คืนเงิน Buyer</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">📄</span> RST + RS VOID</div>
         </div>
       </div>
     </div>
@@ -1287,7 +1319,7 @@
   <div class="slide" data-slide="11">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Shipping</div>
-      <div class="slide-number">11 / 13</div>
+      <div class="slide-number">12 / 17</div>
     </div>
     <div class="slide-title">COD Shipping &<br>Money Reconciliation</div>
     <div class="slide-subtitle">ระบบเก็บเงินปลายทาง + การกระทบยอด</div>
@@ -1348,7 +1380,7 @@
   <div class="slide" data-slide="12">
     <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Logic</div>
-      <div class="slide-number">12 / 13</div>
+      <div class="slide-number">13 / 17</div>
     </div>
     <div class="slide-title">Shipping Cost<br>Adjustment Decision Tree</div>
     <div class="slide-subtitle">ตัดสินใจเรื่องค่าส่ง — GetShip Webhook ได้น้ำหนักจริง</div>
@@ -1380,15 +1412,169 @@
             </ul>
           </div>
         </div>
+        <div class="section-label anim-item" style="margin-top: 16px;">RST — ค่าจัดส่งจากการคืนสินค้า / ส่งไม่สำเร็จ</div>
+        <div class="split-row anim-item">
+          <div class="mini-card">
+            <div class="mini-card-title">📄 RST กรณีคืนเงินอย่างเดียว</div>
+            <ul>
+              <li>ค่าส่งขาไป</li>
+              <li>ออกให้ Seller</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">📄 RST กรณีคืนเงิน + คืนสินค้า</div>
+            <ul>
+              <li>ค่าส่งขาไป + ขากลับ</li>
+              <li>ออกให้ Seller</li>
+            </ul>
+          </div>
+          <div class="mini-card">
+            <div class="mini-card-title">📄 RST กรณีส่งไม่สำเร็จ/ตีกลับ</div>
+            <ul>
+              <li>ค่าส่งขาไป (+ RSA ถ้ามีส่วนต่าง)</li>
+              <li>ออกให้ Seller</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ===== SLIDE 13: Admin Gatekeeper ===== -->
+  <!-- ===== SLIDE 13: Financial Documents ===== -->
   <div class="slide" data-slide="13">
     <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Finance</div>
+      <div class="slide-number">14 / 17</div>
+    </div>
+    <div class="slide-title">Financial Documents<br>6 ประเภทเอกสาร</div>
+    <div class="slide-subtitle">เอกสารทางการเงินที่ Platform ออกอัตโนมัติตาม Event — Marketplace ไม่ออกเอกสารขายแทน Seller</div>
+    <div class="slide-content">
+      <div class="flow-container">
+        <div class="section-label anim-item">ORDER = PENDING</div>
+        <div class="split-row anim-item">
+          <div class="mini-card" style="border-color: rgba(18,108,98,0.25);">
+            <div class="mini-card-title" style="color:#0E554D;">📄 PV — Platform Discount Voucher</div>
+            <ul>
+              <li>ออกเมื่อ Buyer ใช้ส่วนลดแพลตฟอร์ม</li>
+              <li>ออกให้ Seller (เก็บใน Admin)</li>
+              <li>ยกเลิก Order → VOID</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(18,108,98,0.25);">
+            <div class="mini-card-title" style="color:#0E554D;">📄 RS — Receipt Shipping</div>
+            <ul>
+              <li>ออกเมื่อ Payment Completed</li>
+              <li>เก็บ Internal/Admin (ไม่ส่ง Buyer อัตโนมัติ)</li>
+              <li>ยกเลิก/คืนสินค้า → VOID</li>
+            </ul>
+          </div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 12px;">ORDER = COMPLETE</div>
+        <div class="split-row anim-item">
+          <div class="mini-card" style="border-color: rgba(198,155,87,0.25);">
+            <div class="mini-card-title" style="color:#9A7B2F;">📄 RV — GP Invoice/Receipt</div>
+            <ul>
+              <li>หัก GP + ค่าธุรกรรมการชำระเงิน</li>
+              <li>ออกให้ Seller (Seller ปริ้นได้)</li>
+              <li>ยกเลิกหลัง Complete → VOID</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(198,155,87,0.25);">
+            <div class="mini-card-title" style="color:#9A7B2F;">📄 RSA — Shipping Adjustment</div>
+            <ul>
+              <li>ออกเมื่อ Actual > Estimated (ส่วนต่างค่าส่ง)</li>
+              <li>ออกให้ Seller (Seller ปริ้นได้)</li>
+              <li>ไม่มีส่วนต่างเพิ่ม = ไม่ออก</li>
+            </ul>
+          </div>
+        </div>
+        <div class="section-label anim-item" style="margin-top: 12px;">WITHDRAW / REFUND</div>
+        <div class="split-row anim-item">
+          <div class="mini-card" style="border-color: rgba(108,91,123,0.25);">
+            <div class="mini-card-title" style="color:#6C5B7B;">📄 PVW — Payment Voucher Withdraw</div>
+            <ul>
+              <li>ออกเมื่อโอนเงินจริงสำเร็จ</li>
+              <li>ออกให้ Seller/Affiliate (เก็บใน Admin)</li>
+              <li>Affiliate: ไม่แสดงภาษีหัก ณ ที่จ่าย</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="border-color: rgba(108,91,123,0.25);">
+            <div class="mini-card-title" style="color:#6C5B7B;">📄 RST — Return Shipping Receipt</div>
+            <ul>
+              <li>ออกเมื่อ Refund Completed / ส่งไม่สำเร็จ-ตีกลับ</li>
+              <li>ออกให้ Seller (Seller ปริ้นได้)</li>
+              <li>คืนเงินอย่างเดียว → ค่าส่งขาไป / คืนสินค้า → 2 ขา</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 14: Document Management ===== -->
+  <div class="slide" data-slide="14">
+    <div class="slide-header">
+      <div class="slide-badge"><span class="dot"></span>Document</div>
+      <div class="slide-number">15 / 17</div>
+    </div>
+    <div class="slide-title">Document Management System</div>
+    <div class="slide-subtitle">ศูนย์กลางเอกสารทางการเงิน — Admin เห็นทุกเอกสาร / Seller เห็นเฉพาะของตน</div>
+    <div class="slide-content">
+      <div class="flow-container" style="gap: clamp(6px, 0.8vw, 10px);">
+        <div class="flow-row anim-item">
+          <div class="flow-step highlight-blue"><span class="icon">📋</span> เข้าเมนู</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-orange"><span class="icon">🔍</span> Filter/Search</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">👁️</span> View Detail</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step highlight-green"><span class="icon">📥</span> Download PDF</div>
+          <span style="color:var(--text-muted); font-size:clamp(10px,1vw,14px); margin: 0 4px;">|</span>
+          <div class="flow-step highlight-red"><span class="icon">❌</span> Void → Watermark + ยังดูได้</div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: clamp(6px,0.8vw,12px);" class="anim-item">
+          <div class="mini-card" style="min-width: auto;">
+            <div class="mini-card-title">📊 Columns</div>
+            <ul>
+              <li>Doc No. / Doc Type</li>
+              <li>Issued To / Order ID</li>
+              <li>Amount / Status / Date</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="min-width: auto;">
+            <div class="mini-card-title">🔍 Filter</div>
+            <ul>
+              <li>Doc Type / Issued To</li>
+              <li>Date Range / Order ID</li>
+              <li>Doc No. / Amount</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="min-width: auto;">
+            <div class="mini-card-title" style="color:#0E554D;">⚡ Trigger Events</div>
+            <ul>
+              <li>Order Complete → RV/PV</li>
+              <li>Refund → PVW/RST</li>
+              <li>Shipping Adj. → RSA</li>
+            </ul>
+          </div>
+          <div class="mini-card" style="min-width: auto;">
+            <div class="mini-card-title" style="color:#C0392B;">🔒 Constraints</div>
+            <ul>
+              <li>แก้ไขตัวเลขไม่ได้</li>
+              <li>Seller เห็นเฉพาะของตน</li>
+              <li>Trace กลับ Event ได้</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SLIDE 15: Admin Gatekeeper ===== -->
+  <div class="slide" data-slide="15">
+    <div class="slide-header">
       <div class="slide-badge"><span class="dot"></span>Admin</div>
-      <div class="slide-number">13 / 13</div>
+      <div class="slide-number">16 / 17</div>
     </div>
     <div class="slide-title">Admin Gatekeeper &<br>Verification Pipelines</div>
     <div class="slide-subtitle">ระบบตรวจสอบ อนุมัติ และจัดการข้อมูล</div>
@@ -1423,8 +1609,12 @@
     </div>
   </div>
 
-  <!-- ===== SLIDE 14: THANK YOU ===== -->
-  <div class="slide" data-slide="14">
+  <!-- ===== SLIDE 16: THANK YOU ===== -->
+  <div class="slide" data-slide="16">
+    <div class="slide-header">
+      <div></div>
+      <div class="slide-number">17 / 17</div>
+    </div>
     <div class="slide-content end-content">
       <div style="position:relative; margin-bottom: clamp(8px,1.5vw,20px);">
         <div style="width: clamp(80px,10vw,130px); height: clamp(80px,10vw,130px); border-radius: 50%; background: linear-gradient(135deg, rgba(18,108,98,0.1), rgba(198,155,87,0.1)); display:flex; align-items:center; justify-content:center; margin: 0 auto;">
@@ -1476,7 +1666,7 @@
   <button class="nav-btn" id="prevBtn" title="Previous (←)">‹</button>
   <div class="nav-progress" id="navProgress"></div>
   <button class="nav-btn" id="nextBtn" title="Next (→)">›</button>
-  <div class="nav-counter" id="navCounter">1 / 15</div>
+  <div class="nav-counter" id="navCounter">1 / 17</div>
   <button class="nav-btn" id="menuBtn" title="Slide Menu">☰</button>
 </div>
 
@@ -1509,6 +1699,8 @@ function openLightbox(src) {
     'Non-COD Shipping & Weight Check',
     'COD Shipping & Reconciliation',
     'Shipping Cost Decision Tree',
+    'Financial Documents (6 ประเภท)',
+    'Document Management System',
     'Admin Gatekeeper & Verification',
     'Thank You — BuyDi Fulloop'
   ];
